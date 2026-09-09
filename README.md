@@ -1,4 +1,4 @@
-# Deutsche Bahn Timetables Viewer
+# Deutsche Bahn Timetables
 
 A simple Next.js frontend for browsing Deutsche Bahn (DB) timetable data with filtering capabilities.
 
