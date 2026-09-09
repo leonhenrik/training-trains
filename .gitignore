@@ -4,3 +4,24 @@ env.local
 training-trains-certificate.cer
 .env.local
 documentations/Timetables-1.0.274.json
+
+# Next.js
+.next/
+out/
+node_modules/
+*.pem
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
