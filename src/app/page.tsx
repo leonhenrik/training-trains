@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import { useState, useCallback } from "react";
 import type { LayerId } from "@/components/Map";
 import RoutePanel from "@/components/RoutePanel";
+import InsightsPanel from "@/components/InsightsPanel";
 
 const Map = dynamic(() => import("@/components/Map"), { ssr: false });
 
@@ -300,6 +301,7 @@ export default function Page() {
       </div>
 
       <RoutePanel onHighlight={onRouteExpand} />
+      <InsightsPanel />
     </main>
   );
 }
