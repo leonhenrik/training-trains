@@ -19,6 +19,9 @@ __pycache__/
 venv/
 env/
 
+# Large data files
+src/data/population/*.csv
+
 # IDE
 .vscode/
 .idea/
