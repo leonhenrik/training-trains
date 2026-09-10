@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import LiveTrainsLayer from "./LiveTrainsLayer";
 import WeatherLayer from "./WeatherLayer";
+import PegelLayer from "./PegelLayer";
+import RegionalLayer, { type RegionalMetric } from "./RegionalLayer";
 
 export type LayerId =
   | "streckennetz"
@@ -15,7 +17,10 @@ export type LayerId =
   | "live-trains"
   | "weather-temp"
   | "weather-cloud"
-  | "weather-rain";
+  | "weather-rain"
+  | "pegel"
+  | "regional-bip"
+  | "regional-alo";
 
 interface MapProps {
   visibleLayers: Set<LayerId>;
@@ -410,6 +415,21 @@ export default function Map({ visibleLayers, highlightStreckennummern = [] }: Ma
           tempVisible={visibleLayers.has("weather-temp")}
           cloudVisible={visibleLayers.has("weather-cloud")}
           rainVisible={visibleLayers.has("weather-rain")}
+        />
+      )}
+      {mapReady && (
+        <PegelLayer
+          map={mapRef.current}
+          popup={popupRef.current}
+          visible={visibleLayers.has("pegel")}
+        />
+      )}
+      {mapReady && (
+        <RegionalLayer
+          map={mapRef.current}
+          popup={popupRef.current}
+          visible={visibleLayers.has("regional-bip") || visibleLayers.has("regional-alo")}
+          metric={(visibleLayers.has("regional-alo") ? "unemployment" : "bipPerCapita") as RegionalMetric}
         />
       )}
     </>

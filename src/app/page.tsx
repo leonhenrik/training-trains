@@ -11,7 +11,7 @@ type LayerDef = {
   id: LayerId;
   label: string;
   color: string;
-  symbol: "line" | "dashed-line" | "circle" | "polygon" | "heatmap" | "blue-heatmap";
+  symbol: "line" | "dashed-line" | "circle" | "polygon" | "heatmap" | "blue-heatmap" | "choropleth";
   note?: string;
 };
 
@@ -20,6 +20,9 @@ const LAYERS: LayerDef[] = [
   { id: "weather-temp",      label: "Temperatur",         color: "#34d399",  symbol: "circle",       note: "BrightSky" },
   { id: "weather-cloud",     label: "Bewölkung",          color: "#7dd3fc",  symbol: "blue-heatmap", note: "BrightSky" },
   { id: "weather-rain",      label: "Niederschlag",       color: "#3b82f6",  symbol: "blue-heatmap", note: "BrightSky" },
+  { id: "pegel",             label: "Pegelstände",        color: "#38bdf8",  symbol: "circle",       note: "WSV · 15min" },
+  { id: "regional-bip",      label: "BIP / Kopf",         color: "#facc15",  symbol: "choropleth",   note: "2022" },
+  { id: "regional-alo",      label: "Arbeitslosigkeit",   color: "#ef4444",  symbol: "choropleth",   note: "2024" },
   { id: "population",        label: "Bevölkerung",        color: "#ef4444",  symbol: "heatmap" },
   { id: "streckennetz",      label: "Streckennetz",       color: "#60a5fa",  symbol: "line",         note: "v-codiert" },
   { id: "eisenbahnbruecken", label: "Eisenbahnbrücken",   color: "#f59e0b",  symbol: "line" },
@@ -41,6 +44,24 @@ const SPEED_LEGEND = [
 
 function LayerSymbol({ def }: { def: LayerDef }) {
   const s = def.symbol;
+  if (s === "choropleth") return (
+    <svg width={20} height={8} style={{ flexShrink: 0 }}>
+      <defs>
+        <linearGradient id={`cgrad-${def.id}`} x1="0" x2="1" y1="0" y2="0">
+          {def.id === "regional-bip" ? <>
+            <stop offset="0%"   stopColor="#1e3a8a" />
+            <stop offset="50%"  stopColor="#facc15" />
+            <stop offset="100%" stopColor="#ef4444" />
+          </> : <>
+            <stop offset="0%"   stopColor="#14532d" />
+            <stop offset="50%"  stopColor="#facc15" />
+            <stop offset="100%" stopColor="#ef4444" />
+          </>}
+        </linearGradient>
+      </defs>
+      <rect x={0} y={0} width={20} height={8} fill={`url(#cgrad-${def.id})`} />
+    </svg>
+  );
   if (s === "blue-heatmap") return (
     <svg width={20} height={6} style={{ flexShrink: 0 }}>
       <defs>
@@ -187,6 +208,57 @@ export default function Page() {
                 <span style={{ color: "#475569", fontSize: 10 }}>{label}</span>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Pegel legend */}
+        {visible.has("pegel") && (
+          <div style={{ borderTop: "1px solid #1e2d3d", padding: "8px 14px" }}>
+            <div style={{ color: "#334155", fontSize: 9, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 6 }}>
+              Pegelstand
+            </div>
+            {[
+              { label: "Niedrig",    color: "#94a3b8" },
+              { label: "Normal",     color: "#38bdf8" },
+              { label: "Erhöht",     color: "#f97316" },
+              { label: "Hochwasser", color: "#ef4444" },
+            ].map(({ label, color }) => (
+              <div key={label} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                <span style={{ width: 6, height: 6, borderRadius: "50%", background: color, flexShrink: 0 }} />
+                <span style={{ color: "#475569", fontSize: 10 }}>{label}</span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Regional legend */}
+        {(visible.has("regional-bip") || visible.has("regional-alo")) && (
+          <div style={{ borderTop: "1px solid #1e2d3d", padding: "8px 14px" }}>
+            <div style={{ color: "#334155", fontSize: 9, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 6 }}>
+              {visible.has("regional-alo") ? "Arbeitslosigkeit" : "BIP / Kopf"}
+            </div>
+            <svg width={170} height={8} style={{ display: "block", marginBottom: 4 }}>
+              <defs>
+                <linearGradient id="reglegend" x1="0" x2="1" y1="0" y2="0">
+                  {visible.has("regional-alo") ? <>
+                    <stop offset="0%"   stopColor="#14532d" />
+                    <stop offset="50%"  stopColor="#facc15" />
+                    <stop offset="100%" stopColor="#ef4444" />
+                  </> : <>
+                    <stop offset="0%"   stopColor="#1e3a8a" />
+                    <stop offset="50%"  stopColor="#facc15" />
+                    <stop offset="100%" stopColor="#ef4444" />
+                  </>}
+                </linearGradient>
+              </defs>
+              <rect x={0} y={0} width={170} height={8} fill="url(#reglegend)" />
+            </svg>
+            <div style={{ display: "flex", justifyContent: "space-between", color: "#334155", fontSize: 9 }}>
+              {visible.has("regional-alo")
+                ? <><span>2 %</span><span>6 %</span><span>15 %</span></>
+                : <><span>20k €</span><span>60k €</span><span>110k €</span></>
+              }
+            </div>
           </div>
         )}
 
