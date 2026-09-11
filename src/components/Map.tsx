@@ -5,6 +5,7 @@ import LiveTrainsLayer from "./LiveTrainsLayer";
 import WeatherLayer from "./WeatherLayer";
 import PegelLayer from "./PegelLayer";
 import RegionalLayer, { type RegionalMetric } from "./RegionalLayer";
+import TreeRiskLayer from "./TreeRiskLayer";
 
 export type LayerId =
   | "streckennetz"
@@ -20,7 +21,8 @@ export type LayerId =
   | "weather-rain"
   | "pegel"
   | "regional-bip"
-  | "regional-alo";
+  | "regional-alo"
+  | "tree-risk";
 
 interface MapProps {
   visibleLayers: Set<LayerId>;
@@ -430,6 +432,13 @@ export default function Map({ visibleLayers, highlightStreckennummern = [] }: Ma
           popup={popupRef.current}
           visible={visibleLayers.has("regional-bip") || visibleLayers.has("regional-alo")}
           metric={(visibleLayers.has("regional-alo") ? "unemployment" : "bipPerCapita") as RegionalMetric}
+        />
+      )}
+      {mapReady && (
+        <TreeRiskLayer
+          map={mapRef.current}
+          popup={popupRef.current}
+          visible={visibleLayers.has("tree-risk")}
         />
       )}
     </>

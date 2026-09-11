@@ -12,7 +12,7 @@ interface Props {
 }
 
 const SOURCE = "weather-data";
-const TEMP_CIRCLE  = "weather-temp";
+const TEMP_HEAT    = "weather-temp-heat";
 const TEMP_LABEL   = "weather-label";
 const WIND_ARROW   = "weather-wind";
 const CLOUD_HEAT   = "weather-cloud-heat";
@@ -133,38 +133,45 @@ export default function WeatherLayer({ map, popup, tempVisible, cloudVisible, ra
         });
       }
 
-      // ── Temperature circles ───────────────────────────────────────
-      if (!map.getLayer(TEMP_CIRCLE)) {
+      // ── Temperature heatmap ───────────────────────────────────────
+      // Weight = normalized temperature in [-20, 40] → [0, 1].
+      // Uniform-grid source + large radius → continuous interpolated surface.
+      // heatmap-density at each pixel ≈ weighted average of nearby points,
+      // so the color ramp tracks actual temperature rather than point density.
+      if (!map.getLayer(TEMP_HEAT)) {
         map.addLayer({
-          id: TEMP_CIRCLE,
-          type: "circle",
+          id: TEMP_HEAT,
+          type: "heatmap",
           source: SOURCE,
           layout: { visibility: tempVisible ? "visible" : "none" },
           paint: {
-            "circle-radius": 26,
-            "circle-color": [
+            "heatmap-weight": [
               "interpolate", ["linear"],
               ["coalesce", ["get", "temperature"], 10],
-              -10, "#93c5fd",
-              0,   "#60a5fa",
-              5,   "#34d399",
-              15,  "#86efac",
-              20,  "#fde047",
-              25,  "#fb923c",
-              30,  "#ef4444",
-              35,  "#991b1b",
+              -20, 0,
+              40,  1,
             ],
-            "circle-opacity": 0.55,
-            "circle-stroke-color": [
-              "interpolate", ["linear"],
-              ["coalesce", ["get", "temperature"], 10],
-              -10, "#bfdbfe",
-              15,  "#a7f3d0",
-              30,  "#fca5a5",
+            "heatmap-radius": [
+              "interpolate", ["exponential", 2], ["zoom"],
+              4, 55, 6, 80, 8, 130, 10, 220,
             ],
-            "circle-stroke-width": 1.5,
-            "circle-stroke-opacity": 0.7,
-            "circle-blur": 0.3,
+            "heatmap-intensity": [
+              "interpolate", ["linear"], ["zoom"],
+              4, 1.6, 6, 1.4, 8, 1.2, 10, 1.0,
+            ],
+            "heatmap-color": [
+              "interpolate", ["linear"], ["heatmap-density"],
+              0,    "rgba(0,0,0,0)",
+              0.05, "rgba(147,197,253,0.55)",  // cold blue  (-20°)
+              0.2,  "rgba(96,165,250,0.70)",   // blue       (-8°)
+              0.35, "rgba(52,211,153,0.75)",   // teal-green (3°)
+              0.5,  "rgba(134,239,172,0.80)",  // light green(10°)
+              0.62, "rgba(253,224,71,0.85)",   // yellow     (17°)
+              0.75, "rgba(251,146,60,0.88)",   // orange     (24°)
+              0.88, "rgba(239,68,68,0.92)",    // red        (31°)
+              1.0,  "rgba(127,29,29,0.96)",    // dark red   (40°)
+            ],
+            "heatmap-opacity": 0.82,
           },
         });
       }
@@ -271,8 +278,9 @@ export default function WeatherLayer({ map, popup, tempVisible, cloudVisible, ra
             </div>
             <table class="popup-table">
               <tr><td class="popup-key">Temperatur</td><td class="popup-val">${p.temperature != null ? p.temperature + " °C" : "—"}</td></tr>
+              <tr><td class="popup-key">Gefühlt</td><td class="popup-val">${p.apparent_temperature != null ? p.apparent_temperature + " °C" : "—"}</td></tr>
               <tr><td class="popup-key">Bewölkung</td><td class="popup-val">${p.cloud_cover != null ? p.cloud_cover + "%" : "—"}</td></tr>
-              <tr><td class="popup-key">Niederschlag</td><td class="popup-val">${p.precipitation != null ? p.precipitation + " mm/10min" : "—"}</td></tr>
+              <tr><td class="popup-key">Niederschlag</td><td class="popup-val">${p.precipitation != null ? p.precipitation + " mm" : "—"}</td></tr>
               <tr><td class="popup-key">Wind</td><td class="popup-val">${windStr}</td></tr>
               <tr><td class="popup-key">Sichtweite</td><td class="popup-val">${vis}</td></tr>
               <tr><td class="popup-key">Luftdruck</td><td class="popup-val">${p.pressure != null ? p.pressure + " hPa" : "—"}</td></tr>
@@ -282,7 +290,7 @@ export default function WeatherLayer({ map, popup, tempVisible, cloudVisible, ra
         ).addTo(map);
       }
 
-      for (const layer of [TEMP_CIRCLE, TEMP_LABEL]) {
+      for (const layer of [TEMP_HEAT, TEMP_LABEL]) {
         map.on("click", layer, (e) => { e.preventDefault(); showPopup(e); });
         map.on("mousemove", layer, () => { map.getCanvas().style.cursor = "pointer"; });
         map.on("mouseleave", layer, () => { map.getCanvas().style.cursor = ""; });
@@ -302,9 +310,9 @@ export default function WeatherLayer({ map, popup, tempVisible, cloudVisible, ra
   useEffect(() => {
     if (!map || !initialized.current) return;
     applyVisibility(map, {
-      [TEMP_CIRCLE]: tempVisible,
-      [TEMP_LABEL]:  tempVisible,
-      [WIND_ARROW]:  tempVisible,
+      [TEMP_HEAT]:  tempVisible,
+      [TEMP_LABEL]: tempVisible,
+      [WIND_ARROW]: tempVisible,
     });
   }, [map, tempVisible]);
 

@@ -12,15 +12,16 @@ type LayerDef = {
   id: LayerId;
   label: string;
   color: string;
-  symbol: "line" | "dashed-line" | "circle" | "polygon" | "heatmap" | "blue-heatmap" | "choropleth";
+  symbol: "line" | "dashed-line" | "circle" | "polygon" | "heatmap" | "blue-heatmap" | "temp-heatmap" | "choropleth";
   note?: string;
 };
 
 const LAYERS: LayerDef[] = [
   { id: "live-trains",       label: "Live-Züge",          color: "#22c55e",  symbol: "circle",       note: "60s" },
-  { id: "weather-temp",      label: "Temperatur",         color: "#34d399",  symbol: "circle",       note: "BrightSky" },
-  { id: "weather-cloud",     label: "Bewölkung",          color: "#7dd3fc",  symbol: "blue-heatmap", note: "BrightSky" },
-  { id: "weather-rain",      label: "Niederschlag",       color: "#3b82f6",  symbol: "blue-heatmap", note: "BrightSky" },
+  { id: "weather-temp",      label: "Temperatur",         color: "#facc15",  symbol: "temp-heatmap", note: "Open-Meteo" },
+  { id: "weather-cloud",     label: "Bewölkung",          color: "#7dd3fc",  symbol: "blue-heatmap", note: "Open-Meteo" },
+  { id: "weather-rain",      label: "Niederschlag",       color: "#3b82f6",  symbol: "blue-heatmap", note: "Open-Meteo" },
+  { id: "tree-risk",         label: "Baum-Sturmrisiko",   color: "#ef4444",  symbol: "line",         note: "Copernicus" },
   { id: "pegel",             label: "Pegelstände",        color: "#38bdf8",  symbol: "circle",       note: "WSV · 15min" },
   { id: "regional-bip",      label: "BIP / Kopf",         color: "#facc15",  symbol: "choropleth",   note: "2022" },
   { id: "regional-alo",      label: "Arbeitslosigkeit",   color: "#ef4444",  symbol: "choropleth",   note: "2024" },
@@ -61,6 +62,20 @@ function LayerSymbol({ def }: { def: LayerDef }) {
         </linearGradient>
       </defs>
       <rect x={0} y={0} width={20} height={8} fill={`url(#cgrad-${def.id})`} />
+    </svg>
+  );
+  if (s === "temp-heatmap") return (
+    <svg width={20} height={6} style={{ flexShrink: 0 }}>
+      <defs>
+        <linearGradient id={`tg-${def.id}`} x1="0" x2="1" y1="0" y2="0">
+          <stop offset="0%"   stopColor="#93c5fd" />
+          <stop offset="30%"  stopColor="#34d399" />
+          <stop offset="55%"  stopColor="#fde047" />
+          <stop offset="75%"  stopColor="#fb923c" />
+          <stop offset="100%" stopColor="#7f1d1d" />
+        </linearGradient>
+      </defs>
+      <rect x={0} y={0} width={20} height={6} fill={`url(#tg-${def.id})`} />
     </svg>
   );
   if (s === "blue-heatmap") return (
@@ -259,6 +274,32 @@ export default function Page() {
                 ? <><span>2 %</span><span>6 %</span><span>15 %</span></>
                 : <><span>20k €</span><span>60k €</span><span>110k €</span></>
               }
+            </div>
+          </div>
+        )}
+
+        {/* Tree risk legend */}
+        {visible.has("tree-risk") && (
+          <div style={{ borderTop: "1px solid #1e2d3d", padding: "8px 14px" }}>
+            <div style={{ color: "#334155", fontSize: 9, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 6 }}>
+              Baum-Sturmrisiko
+            </div>
+            {[
+              { label: "Gering",     color: "#22c55e" },
+              { label: "Niedrig",    color: "#84cc16" },
+              { label: "Mittel",     color: "#facc15" },
+              { label: "Hoch",       color: "#f97316" },
+              { label: "Sehr hoch",  color: "#ef4444" },
+            ].map(({ label, color }) => (
+              <div key={label} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                <svg width={16} height={3} style={{ flexShrink: 0 }}>
+                  <rect x={0} y={0} width={16} height={3} fill={color} />
+                </svg>
+                <span style={{ color: "#475569", fontSize: 10 }}>{label}</span>
+              </div>
+            ))}
+            <div style={{ color: "#1e3a5f", fontSize: 9, marginTop: 4 }}>
+              Copernicus TCD 2018 × Windböen
             </div>
           </div>
         )}
